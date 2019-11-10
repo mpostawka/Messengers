@@ -16,6 +16,7 @@ export class State {
             [0,0,0,0,0],
             [0,0,1,3,0]
           ];
+        this.level = "easy";
         this.fixedRouteBoard = [];
         this.fixedRoutes = [];
         this.elements = [];
@@ -24,6 +25,27 @@ export class State {
         this.activeRouteBoard = [];
         this.extend = true;
         this.clearFixedRouteBoard();
+
+        this.save = {
+            easy: {
+                saved: false,
+                view: [],
+                fixedRouteBoard: [],
+                fixedRoutes: []
+            },
+            medium: {
+                saved: false,
+                view: [],
+                fixedRouteBoard: [],
+                fixedRoutes: []
+            },
+            hard: {
+                saved: false,
+                view: [],
+                fixedRouteBoard: [],
+                fixedRoutes: []
+            }
+        };
     }
 
     reset(version) {
@@ -34,6 +56,7 @@ export class State {
         this.activeRoute = [];
         this.activeRouteBoard = [];
         this.extend = true;
+        this.level = version;
 
         switch(version) {
             case "easy": 
@@ -84,7 +107,15 @@ export class State {
         for(let y=0; y<this.height; y++) {
             for(let x=0; x<this.width; x++) {
                 if(this.fixedRouteBoard[y][x] === 0)
-                this.elements[y][x].className = "";
+                    this.elements[y][x].className = "";
+            }
+        }
+    }
+
+    restoreElements(level) {
+        for(let y=0; y<this.height; y++) {
+            for(let x=0; x<this.width; x++) {
+                this.elements[y][x].className = this.save[level].view[y][x];
             }
         }
     }

@@ -88,14 +88,125 @@ export class View {
         returnButton.addEventListener('mouseout', _ => returnButton.style="background-color:rgb(52, 235, 91)");
         returnButton.addEventListener('click', _ => this.createStartContent());
 
-        
+        const saveButton = document.createElement("div");
+        saveButton.classList.add("button");
+        const pSave = document.createElement("p");
+        pSave.innerText = "Save";
+        saveButton.append(pSave);
+        saveButton.style="background-color:rgb(235, 52, 91)";
+        saveButton.addEventListener('mouseover', _ => saveButton.style="background-color:rgb(117, 25, 45)");
+        saveButton.addEventListener('mouseout', _ => saveButton.style="background-color:rgb(235, 52, 91)");
+        saveButton.addEventListener('click', this.handleSaveButton.bind(this));
+
+        const loadButton = document.createElement("div");
+        loadButton.classList.add("button");
+        const pLoad = document.createElement("p");
+        pLoad.innerText = "Load";
+        loadButton.append(pLoad);
+        loadButton.style="background-color:rgb(52, 91, 235)";
+        loadButton.addEventListener('mouseover', _ => loadButton.style="background-color:rgb(26, 45, 117)");
+        loadButton.addEventListener('mouseout', _ => loadButton.style="background-color:rgb(52, 91, 235)");
+        loadButton.addEventListener('click', this.handleLoadButton.bind(this));
+
+
         this.game.append(table);
         this.game.append(returnButton);
+        this.game.append(saveButton);
+        this.game.append(loadButton);
         this.table = table;
         window.addEventListener('contextmenu', e => e.preventDefault());
         table.addEventListener('mousedown', this.handleMouseDown.bind(this));
         window.addEventListener('mouseup', this.handleMouseUp.bind(this));
         table.addEventListener('mouseover', this.handleMouseOver.bind(this));
+    }
+
+    handleSaveButton(e) {
+        if(this.state.save[this.state.level].saved) {
+            this.table.caption.innerText = "GAME SAVE OVERWRITEN!";
+        } else {
+            this.table.caption.innerText = "FIRST SAVE";
+        }
+        let save = {
+            saved: true,
+            view: [],
+            fixedRouteBoard: [],
+            fixedRoutes: []
+        };
+        save.saved = true;
+        save.view = [];
+        for(let y=0; y<this.state.height; y++) {
+            let row = [];
+            for(let x=0; x<this.state.width; x++) {
+                row.push(this.state.elements[y][x].className);
+            }
+            save.view.push(row);
+        }
+        save.fixedRoutes = [];
+        for(const fixedRouteIndex in this.state.fixedRoutes) {
+            var savedRoute = [];
+            for(const step of this.state.fixedRoutes[fixedRouteIndex]) {
+                savedRoute.push({
+                    x: step.x,
+                    y: step.y,
+                    td: step.td,
+                    className: step.className
+                });
+            }
+            save.fixedRoutes[fixedRouteIndex] = savedRoute;
+        }
+        save.fixedRouteBoard = [];
+        for(let y=0; y<this.state.height; y++) {
+            let row = [];
+            for(let x=0; x<this.state.width; x++) {
+                row.push(0);
+            }
+            save.fixedRouteBoard.push(row);
+        }
+        for(let y=0; y<this.state.height; y++) {
+            for(let x=0; x<this.state.width; x++) {
+                save.fixedRouteBoard[y][x] = this.state.fixedRouteBoard[y][x];
+            }
+        }
+        this.state.save[this.state.level] = save;
+    }
+
+    handleLoadButton(e) {
+        const level = this.state.level;
+        const save = this.state.save[level];
+        if(save.saved) {
+            this.state.reset(level);
+            this.createGameContent();
+            this.state.restoreElements(level);
+            this.state.fixedRoutes = [];
+            for(const fixedRouteIndex in save.fixedRoutes) {
+                var savedRoute = [];
+                for(const step of save.fixedRoutes[fixedRouteIndex]) {
+                    savedRoute.push({
+                        x: step.x,
+                        y: step.y,
+                        td: step.td,
+                        className: step.className
+                    });
+                }
+                this.state.fixedRoutes[fixedRouteIndex] = savedRoute;
+            }
+            this.state.fixedRouteBoard = [];
+            for(let y=0; y<this.state.height; y++) {
+                let row = [];
+                for(let x=0; x<this.state.width; x++) {
+                    row.push(0);
+                }
+                this.state.fixedRouteBoard.push(row);
+            }
+            for(let y=0; y<this.state.height; y++) {
+                for(let x=0; x<this.state.width; x++) {
+                    this.state.fixedRouteBoard[y][x] = save.fixedRouteBoard[y][x];
+                }
+            }
+            this.table.caption.innerText = "GAME LOADED";
+        } else {
+            this.table.caption.innerText = "NO SAVE AVAILABLE";
+        }
     }
 
     handleMouseDown(e) {
@@ -115,14 +226,13 @@ export class View {
                         className: e.target.className
                     }];
                     this.state.activeRouteBoard[y][x] = this.route;
-                    // console.log(e.target.getBoundingClientRect());
                 }
             } else if(e.which === 3) {
                 const clickedRoute = this.state.fixedRouteBoard[y][x];
                 if(clickedRoute !== 0) {
                     for(const element of this.state.fixedRoutes[clickedRoute]) {
                         this.state.fixedRouteBoard[element.y][element.x] = 0;
-                        element.td.className = '';
+                        this.state.elements[element.y][element.x].className = '';
                     }
                     this.state.fixedRoutes[clickedRoute] = [];
                 }
